@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 using LPMSB2;
 using TechTweaking.Bluetooth;
@@ -21,18 +22,16 @@ public class LpmsConnection : MonoBehaviour
     public Quaternion sensorOrientation;
 
     // Optionally pass in a explicit Bluetooth Device to use
-    LpmsConnection(BluetoothDevice device)
+    private void Awake()
     {
+        sensor = new LpmsB2(this);
         BluetoothAdapter.askEnableBluetooth();
         BluetoothAdapter.OnDeviceOFF += HandleOnDeviceOff;
         BluetoothAdapter.OnDevicePicked += HandleOnDevicePicked;
         BluetoothAdapter.OnDisconnected += HandleOnDisconnected;
         BluetoothAdapter.OnReadingStarted += HandleOnReadingStarted;
         BluetoothAdapter.OnReadingStoped += HandleOnReadingStopped;
-        this.device = device;
-        // If no device is given, check for a saved device
-        if (this.device == null)
-            CheckForSavedDevice();
+        CheckForSavedDevice();
     }
 
     // Clean up events when this class is destroyed
@@ -81,6 +80,7 @@ public class LpmsConnection : MonoBehaviour
         PlayerPrefs.SetString("sensor_mac", device.MacAddress);
         PlayerPrefs.SetString("sensor_name", device.Name);
         Debug.Log(device.Name + ": Selected. Saved as preferred device.");
+        Connect();
     }
 
     void HandleOnDisconnected(BluetoothDevice device)
@@ -105,7 +105,6 @@ public class LpmsConnection : MonoBehaviour
 
         while (device.IsReading)
         {
-
             byte[] msg = device.read();
 
             if (msg != null)
@@ -170,7 +169,9 @@ public class LpmsConnection : MonoBehaviour
         }
         // Store the sensor orientation in local variable
         else
+        {
             sensorOrientation = new Quaternion(-quat[0], -quat[1], quat[2], quat[3]);
+        }
     }
 
     public void SetOrientationOffset(int offset)
